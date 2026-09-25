@@ -1,5 +1,6 @@
 <?php
-// --- PUSAT DATA (DIKELOLA OLEH PHP) ---
+// --- PUSAT DATA (DIKELOLA OLEH PHP & DATABASE) ---
+require_once dirname(__FILE__) . '/php/config.php';
 
 // Data untuk link navigasi dan footer
 $navLinks = [
@@ -10,19 +11,45 @@ $navLinks = [
   '#contact' => 'Kontak',
 ];
 
-// Data untuk bagian menu
-$menuItems = [
-  ['img' => '1.jpg', 'alt' => 'Espresso', 'title' => 'Espresso', 'price' => 'IDR 15K'],
-  ['img' => '2.jpg', 'alt' => 'Cappuccino', 'title' => 'Cappuccino', 'price' => 'IDR 25K'],
-  ['img' => '3.jpg', 'alt' => 'Latte', 'title' => 'Latte', 'price' => 'IDR 28K'],
-  ['img' => '4.jpg', 'alt' => 'Americano', 'title' => 'Americano', 'price' => 'IDR 18K'],
-  ['img' => '5.jpg', 'alt' => 'Mocha', 'title' => 'Mocha', 'price' => 'IDR 30K'],
-  ['img' => '6.jpg', 'alt' => 'Macchiato', 'title' => 'Macchiato', 'price' => 'IDR 20K'],
-];
+// 1. Ambil Menu Reguler dari Database (unggulan = 0)
+$menuItems = [];
+$resMenu = @mysqli_query($conn, "SELECT nama_menu, harga, gambar FROM menu WHERE unggulan = 0 ORDER BY id_menu ASC");
+if ($resMenu && mysqli_num_rows($resMenu) > 0) {
+  while ($row = mysqli_fetch_assoc($resMenu)) {
+    $priceInK = 'IDR ' . (int)($row['harga'] / 1000) . 'K';
+    $menuItems[] = [
+      'img'   => $row['gambar'] ?: '1.jpg',
+      'alt'   => $row['nama_menu'],
+      'title' => $row['nama_menu'],
+      'price' => $priceInK,
+    ];
+  }
+} else {
+  // Fallback data
+  $menuItems = [
+    ['img' => '1.jpg', 'alt' => 'Espresso', 'title' => 'Espresso', 'price' => 'IDR 15K'],
+    ['img' => '2.jpg', 'alt' => 'Cappuccino', 'title' => 'Cappuccino', 'price' => 'IDR 25K'],
+    ['img' => '3.jpg', 'alt' => 'Latte', 'title' => 'Latte', 'price' => 'IDR 28K'],
+    ['img' => '4.jpg', 'alt' => 'Americano', 'title' => 'Americano', 'price' => 'IDR 18K'],
+    ['img' => '5.jpg', 'alt' => 'Mocha', 'title' => 'Mocha', 'price' => 'IDR 30K'],
+    ['img' => '6.jpg', 'alt' => 'Macchiato', 'title' => 'Macchiato', 'price' => 'IDR 20K'],
+  ];
+}
 
-// $products tidak diperlukan lagi — data produk dikelola di src/app.js (Alpine.data)
-// Ini mencegah duplikasi data dan memastikan 'desc' selalu ada
-
+// 2. Ambil Produk Unggulan dari Database (unggulan = 1) untuk Alpine.js
+$productItems = [];
+$resProd = @mysqli_query($conn, "SELECT id_menu, nama_menu, harga, deskripsi, gambar FROM menu WHERE unggulan = 1 ORDER BY id_menu ASC");
+if ($resProd && mysqli_num_rows($resProd) > 0) {
+  while ($row = mysqli_fetch_assoc($resProd)) {
+    $productItems[] = [
+      'id'    => (int)$row['id_menu'],
+      'name'  => $row['nama_menu'],
+      'img'   => $row['gambar'] ?: '1.jpg',
+      'price' => (int)$row['harga'],
+      'desc'  => $row['deskripsi'] ?: '',
+    ];
+  }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -42,14 +69,19 @@ $menuItems = [
 
   <link rel="stylesheet" href="css/style.css?v=<?php echo filemtime('css/style.css'); ?>" />
 
+  <!-- Data Produk dari Database -->
+  <script>
+    window.PRODUCT_ITEMS = <?php echo json_encode($productItems, JSON_UNESCAPED_UNICODE); ?>;
+  </script>
+
   <!-- app.js HARUS defer dan sebelum Alpine agar alpine:init listener terdaftar duluan -->
   <script defer src="src/app.js?v=<?php echo filemtime('src/app.js'); ?>"></script>
 
   <!-- Alpine.js CDN — defer, berjalan setelah app.js -->
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
-  <!-- Midtrans Snap SDK (Sandbox) -->
-  <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="Mid-client-YYeWPxzVuQXn7Idc"></script>
+  <!-- ZXing Library (Multi-format 1D/2D Barcode & QR Code Writer/Reader) -->
+  <script src="https://unpkg.com/@zxing/library@latest"></script>
 </head>
 
 <body>
@@ -84,9 +116,9 @@ $menuItems = [
             <h3 x-text="item.name"></h3>
             <div class="item-price">
               <span x-text="rupiah(item.price)"></span> ×
-              <button id="remove" @click="$store.cart.remove(item.id)">−</button>
+              <button type="button" class="cart-btn-remove" @click="$store.cart.remove(item.id)">−</button>
               <span x-text="item.quantity"></span>
-              <button id="add" @click="$store.cart.add(item)">&plus;</button> &equals;
+              <button type="button" class="cart-btn-add" @click="$store.cart.add(item)">&plus;</button> &equals;
               <span x-text="rupiah(item.total)"></span>
             </div>
           </div>
@@ -96,14 +128,14 @@ $menuItems = [
       <h4 x-show="$store.cart.items.length">Total : <span x-text="rupiah($store.cart.total)"></span></h4>
       <div class="form-container" x-show="$store.cart.items.length">
         <form action="" id="checkoutForm">
-          <input type="hidden" name="items" x-model="JSON.stringify($store.cart.items)" />
-          <input type="hidden" name="total" x-model="$store.cart.total" />
+          <input type="hidden" name="items" :value="JSON.stringify($store.cart.items)" />
+          <input type="hidden" name="total" :value="$store.cart.total" />
           <h5>Customer Detail</h5>
-          <label for="name"><span>Name</span><input type="text" name="name" id="name" /></label>
-          <label for="email"><span>Email</span><input type="email" name="email" id="email" /></label>
-          <label for="phone"><span>Phone</span><input type="number" name="phone" id="phone"
-              autocomplete="off" /></label>
-          <button class="checkout-button disabled" type="submit" id="checkout-button" value="checkout">Checkout</button>
+          <label for="name"><span>Name</span><input type="text" name="name" id="name" placeholder="Nama Lengkap" required /></label>
+          <label for="email"><span>Email</span><input type="email" name="email" id="email" placeholder="email@contoh.com" required /></label>
+          <label for="phone"><span>Phone</span><input type="tel" name="phone" id="phone" placeholder="08xxxxxxxxxx"
+              autocomplete="off" required /></label>
+          <button class="checkout-button disabled" type="submit" id="checkout-button" value="checkout" disabled>Checkout</button>
         </form>
       </div>
     </div>
@@ -269,6 +301,63 @@ $menuItems = [
           </div>
         </div>
       </template>
+  </div>
+
+  <!-- Modal Pembayaran QR Code ZXing -->
+  <div class="modal" id="qr-payment-modal" style="display:none;">
+    <div class="modal-container qr-modal-container">
+      <button type="button" class="close-icon" id="close-qr-modal"><i data-feather="x"></i></button>
+      <div class="qr-modal-body">
+        <div class="qr-header-badge">
+          <i data-feather="check-circle" style="color:#25d366;width:32px;height:32px;"></i>
+          <h2>Pesanan Berhasil Dibuat!</h2>
+        </div>
+        <p class="qr-subtitle">Silakan scan kode QR di bawah untuk menyelesaikan pembayaran.</p>
+        
+        <div class="order-summary-box">
+          <div class="summary-row">
+            <span>Nomor Pesanan:</span>
+            <strong id="qr-order-id">-</strong>
+          </div>
+          <div class="summary-row">
+            <span>Atas Nama:</span>
+            <strong id="qr-customer-name">-</strong>
+          </div>
+          <div class="summary-row total-row">
+            <span>Total Pembayaran:</span>
+            <strong id="qr-total-amount" class="highlight-total">-</strong>
+          </div>
+        </div>
+
+        <!-- Wadah Render SVG QR Code dari ZXing -->
+        <div id="qrcode-wrapper">
+          <div id="qrcode-container"></div>
+          <div class="qr-badges">
+            <span>QRIS</span> • <span>BCA</span> • <span>Mandiri</span> • <span>GoPay</span> • <span>OVO</span> • <span>DANA</span>
+          </div>
+        </div>
+
+        <div class="qr-instructions">
+          <p><strong>Cara Pembayaran:</strong></p>
+          <ol>
+            <li>Buka aplikasi m-Banking atau e-Wallet favorit Anda.</li>
+            <li>Pilih menu <strong>Bayar / Scan QRIS</strong> lalu arahkan kamera ke QR di atas.</li>
+            <li>Setelah transfer sukses, klik tombol <strong>Konfirmasi WhatsApp</strong> di bawah untuk memberi tahu kasir.</li>
+          </ol>
+        </div>
+
+        <div class="qr-modal-actions">
+          <a href="#" id="qr-invoice-btn" target="_blank" rel="noopener noreferrer" class="btn-invoice">
+            <i data-feather="file-text"></i> <span>Lihat Invoice / Cetak</span>
+          </a>
+          <a href="#" id="qr-wa-btn" target="_blank" rel="noopener noreferrer" class="btn-wa">
+            <i data-feather="message-circle"></i> <span>Konfirmasi ke WhatsApp</span>
+          </a>
+          <button type="button" id="qr-finish-btn" class="btn-finish">
+            Selesai / Pesanan Baru
+          </button>
+        </div>
+      </div>
     </div>
   </div>
   <script>

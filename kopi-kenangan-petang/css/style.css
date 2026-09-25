@@ -174,15 +174,23 @@ body {
   font-size: 1.2rem;
 }
 
-.shopping-cart .cart-item #add .shopping-cart .cart-item #remove {
+.shopping-cart .cart-item button,
+.shopping-cart .cart-item .cart-btn-add,
+.shopping-cart .cart-item .cart-btn-remove {
   display: inline-block;
-  padding: 2px 5px;
+  padding: 2px 8px;
   cursor: pointer;
-  margin: 0 8px;
-  background-color: black;
+  margin: 0 6px;
+  background-color: #333;
   color: white;
   font-weight: bold;
   font-size: 1.1rem;
+  border-radius: 4px;
+  line-height: 1.2;
+}
+
+.shopping-cart .cart-item button:hover {
+  background-color: var(--primary);
 }
 
 .shopping-cart h4 {
@@ -845,3 +853,188 @@ footer .credit a {
     font-size: 55%;
   }
 }
+
+/* ========================================================== */
+/* MODAL PEMBAYARAN QR CODE ZXING                             */
+/* ========================================================== */
+.qr-modal-container {
+  max-width: 480px;
+  width: 90%;
+  background-color: #1a1a1a;
+  border: 1px solid #513c28;
+  border-radius: 12px;
+  padding: 2rem;
+  margin: 2rem auto;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+  color: #fff;
+  position: relative;
+  text-align: center;
+}
+
+.qr-header-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-bottom: 0.5rem;
+}
+
+.qr-header-badge h2 {
+  font-size: 1.6rem;
+  color: #fff;
+}
+
+.qr-subtitle {
+  color: #aaa;
+  font-size: 1.1rem;
+  margin-bottom: 1.2rem;
+}
+
+.order-summary-box {
+  background: #252525;
+  border-radius: 8px;
+  padding: 1rem 1.4rem;
+  margin-bottom: 1.4rem;
+  text-align: left;
+  border: 1px solid #333;
+}
+
+.order-summary-box .summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0.4rem 0;
+  font-size: 1.2rem;
+  color: #ccc;
+}
+
+.order-summary-box .total-row {
+  margin-top: 0.8rem;
+  padding-top: 0.8rem;
+  border-top: 1px dashed #444;
+  font-size: 1.3rem;
+  color: #fff;
+}
+
+.order-summary-box .highlight-total {
+  color: var(--primary);
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+#qrcode-wrapper {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.5rem 1rem 1rem;
+  display: inline-block;
+  margin: 0 auto 1.4rem;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+}
+
+#qrcode-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 220px;
+}
+
+#qrcode-container svg {
+  max-width: 220px;
+  max-height: 220px;
+  height: auto;
+}
+
+.qr-badges {
+  margin-top: 0.8rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #444;
+  letter-spacing: 0.5px;
+}
+
+.qr-instructions {
+  background: #222;
+  border-left: 3px solid var(--primary);
+  padding: 1rem;
+  text-align: left;
+  border-radius: 4px;
+  font-size: 1.1rem;
+  color: #bbb;
+  margin-bottom: 1.6rem;
+  line-height: 1.6;
+}
+
+.qr-instructions ol {
+  padding-left: 1.4rem;
+  margin-top: 0.4rem;
+}
+
+.qr-instructions li {
+  margin-bottom: 0.3rem;
+}
+
+.qr-modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.btn-invoice {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  background-color: var(--primary);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.2rem;
+  padding: 0.9rem 1.4rem;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.btn-invoice:hover {
+  background-color: #9c734a;
+  transform: translateY(-2px);
+  color: #fff;
+}
+
+.btn-wa {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  background-color: #25d366;
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.2rem;
+  padding: 0.9rem 1.4rem;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.btn-wa:hover {
+  background-color: #1eb857;
+  transform: translateY(-2px);
+  color: #fff;
+}
+
+.btn-finish {
+  background: transparent;
+  border: 1px solid #555;
+  color: #ccc;
+  font-size: 1.1rem;
+  padding: 0.7rem 1.4rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-finish:hover {
+  background: #333;
+  color: #fff;
+  border-color: #777;
+}
+

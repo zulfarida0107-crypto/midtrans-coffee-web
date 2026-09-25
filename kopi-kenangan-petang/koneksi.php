@@ -1,13 +1,14 @@
 <?php
 // koneksi.php
 
-$servername = "localhost";
+$servername = "127.0.0.1";
 $username = "root";
 $password = ""; 
 $database = "db_classiccoffee"; // Ganti dengan nama database Anda
+$port = 3307;
 
 // Buat Koneksi
-$conn = mysqli_connect($servername, $username, $password, $database);
+$conn = mysqli_connect($servername, $username, $password, $database, $port);
 
 // Cek Koneksi
 if (!$conn) {
